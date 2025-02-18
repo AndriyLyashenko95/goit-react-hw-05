@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import movieService from '../services/movieService';
 
 const MovieReviews = ({ movieId }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showReviews, setShowReviews] = useState(false);
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await axios.get(
-          `https://api.themoviedb.org/3/movie/${movieId}/reviews?language=en-US`,
-          {
-            headers: { Authorization: ' Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlNDFmZjM4NzJiMGUwNDk4YjMxYmI0NTI3N2U2NDdjOCIsIm5iZiI6MTczOTEzMjAzMi42MTY5OTk5LCJzdWIiOiI2N2E5MGM4MDI0YmJmYzY1MjE5MzYzODciLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.XaEWiJHyAKhS6faFYmOJRi-XR_b8LdnmTCO-CfCcWZ8'},
-          }
-        );
-        setReviews(response.data.results);
+        const reviewsData = await movieService.fetchMovieReviews(movieId);
+        setReviews(reviewsData);
       } catch (error) {
         setError('Failed to fetch reviews');
       } finally {
@@ -26,23 +22,37 @@ const MovieReviews = ({ movieId }) => {
     fetchReviews();
   }, [movieId]);
 
+  const toggleReviews = () => {
+    setShowReviews(prevState => !prevState);
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
   return (
     <div>
-      <h3>Reviews</h3>
-      {reviews.length === 0 ? (
-        <p>No reviews available</p>
-      ) : (
-        <ul>
-          {reviews.map((review) => (
-            <li key={review.id}>
-              <h4>{review.author}</h4>
-              <p>{review.content}</p>
-            </li>
-          ))}
-        </ul>
+      <button onClick={toggleReviews}>
+        {showReviews ? 'Hide Reviews' : 'Show Reviews'}
+      </button>
+
+      {showReviews && (
+        <div>
+          <h4>Reviews</h4>
+          {reviews.length > 0 ? (
+            <ul>
+              {reviews.map(review => (
+                <li key={review.id}>
+                  <p>{review.content}</p>
+                  <p>
+                    <strong>{review.author}</strong>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No reviews available.</p>
+          )}
+        </div>
       )}
     </div>
   );

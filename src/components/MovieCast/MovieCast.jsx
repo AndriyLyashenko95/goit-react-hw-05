@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import movieService from '../services/movieService';
 
 const MovieCast = ({ movieId }) => {
   const [cast, setCast] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCast, setShowCast] = useState(false);
 
   useEffect(() => {
     const fetchCast = async () => {
       try {
-        const response = await axios.get(
-          `https://api.themoviedb.org/3/movie/${movieId}/credits?language=en-US`,
-          {
-            headers: { Authorization: ' Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlNDFmZjM4NzJiMGUwNDk4YjMxYmI0NTI3N2U2NDdjOCIsIm5iZiI6MTczOTEzMjAzMi42MTY5OTk5LCJzdWIiOiI2N2E5MGM4MDI0YmJmYzY1MjE5MzYzODciLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.XaEWiJHyAKhS6faFYmOJRi-XR_b8LdnmTCO-CfCcWZ8'},
-          }
-        );
-        setCast(response.data.cast);
+        const castData = await movieService.fetchMovieCast(movieId);
+        setCast(castData);
       } catch (error) {
         setError('Failed to fetch cast data');
       } finally {
@@ -26,27 +22,39 @@ const MovieCast = ({ movieId }) => {
     fetchCast();
   }, [movieId]);
 
+  const toggleCast = () => {
+    setShowCast(prevState => !prevState);
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
   return (
     <div>
-      <h3>Cast</h3>
-      <ul>
-        {cast.map((actor) => (
-          <li key={actor.id}>
-            {actor.profile_path && (
-              <img
-                src={`https://image.tmdb.org/t/p/w500${actor.profile_path}`}
-                alt={actor.name}
-                style={{ width: '100px', height: '150px', objectFit: 'cover' }}
-              />
-            )}
-            <h4>{actor.name}</h4>
-            <p>{actor.character}</p>
-          </li>
-        ))}
-      </ul>
+      <button onClick={toggleCast}>
+        {showCast ? 'Hide Cast' : 'Show Cast'}
+      </button>
+
+      {showCast && (
+        <div>
+          <h3>Cast</h3>
+          <ul>
+            {cast.map((actor) => (
+              <li key={actor.id}>
+                {actor.profile_path && (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${actor.profile_path}`}
+                    alt={actor.name}
+                    style={{ width: '100px', height: '150px', objectFit: 'cover' }}
+                  />
+                )}
+                <h4>{actor.name}</h4>
+                <p>{actor.character}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
